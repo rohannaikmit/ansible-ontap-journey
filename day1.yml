@@ -1,0 +1,9 @@
+---
+student:Bibbu
+Learning_goal: Ontap_automation
+Days_required: 20
+
+Skills_to_learn:
+  - Ansible_basics
+  - Netapp_collections
+  - Storage_provisioning

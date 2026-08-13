@@ -1,0 +1,16 @@
+---
+- name: My First Ansible Playbook
+  hosts: my_test_environment
+  
+  tasks:
+    - name: Print a welcome message
+      ansible.builtin.debug:
+        msg: "Hello from Ansible! Day 2 is underway."
+
+    - name: Create a test directory
+      ansible.builtin.file:
+        path: test_folder
+        state: directory
+    - name: Directory Status
+      ansible.builtin.debug:
+        msg: "Directory Created."

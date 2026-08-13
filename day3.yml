@@ -1,0 +1,23 @@
+---
+
+- name: Practice of Variable and loops
+  hosts: my_test_environment
+
+  vars:
+    base_folder: test_folder
+    ontap_volumes:
+      - fol_vol1
+      - fol_vol2
+      - fol_vol3
+
+  tasks:
+    - name: Folder being created
+      ansible.builtin.debug:
+        msg: "Simulating volume create : {{ item }}"
+      loop: "{{ ontap_volumes }}"
+
+    - name: Creating folders
+      ansible.builtin.file:
+        path: "{{ base_folder }}/{{ item }}"
+        state: directory
+      loop: "{{ ontap_volumes }}"

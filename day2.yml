@@ -11,6 +11,3 @@
       ansible.builtin.file:
         path: test_folder
         state: directory
-    - name: Directory Status
-      ansible.builtin.debug:
-        msg: "Directory Created."

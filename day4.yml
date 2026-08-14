@@ -1,0 +1,30 @@
+---
+- name: Practice of When conditions
+  hosts: my_test_environment
+
+  vars:
+    data_lif: 
+      - name: Lif1
+        ip: 192.168.0.1
+        state: true
+
+      - name: Lif2
+        ip: 192.168.0.2
+        state: false
+
+      - name: Lif3
+        ip: 192.168.0.3
+        state: true    
+
+  tasks:
+    - name: Creating base folder
+      ansible.builtin.file:
+        path: "lif_config"
+        state: directory
+    
+    - name: Create lif config files
+      ansible.builtin.file:
+        path: "lif_config/{{ item.name }}.txt"
+        state: touch
+      loop: "{{ data_lif }}"
+      when: item.state == true 

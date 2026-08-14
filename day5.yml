@@ -1,0 +1,19 @@
+---
+- name: Day 5 - External Vars and Register
+  hosts: my_test_environment
+  
+  # Tell Ansible to load variables from our external file
+  vars_files:
+    - day5_vars.yml
+    
+  tasks:
+    - name: Simulate running a system check command
+      # We use the 'command' module to run a basic Linux command
+      ansible.builtin.command: echo "Checking ONTAP version {{ ontap_version }} on {{ cluster_name }}..."
+      # We capture the output of this command into a new variable called 'sys_check_result'
+      register: sys_check_result
+
+    - name: Print the captured output
+      ansible.builtin.debug:
+        # We look inside our captured variable to print just the standard output (stdout)
+        msg: "The cluster reported: {{ sys_check_result.stdout }}"

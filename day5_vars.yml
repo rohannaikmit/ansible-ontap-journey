@@ -1,0 +1,5 @@
+---
+# This file ONLY contains data, no tasks.
+cluster_name: "blr-prod-cluster"
+ontap_version: "9.12.1"
+maintenance_mode: false

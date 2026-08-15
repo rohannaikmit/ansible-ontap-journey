@@ -1,0 +1,13 @@
+---
+- name: Practice 5 - Inspecting Registered Data
+  hosts: my_test_environment
+  
+  tasks:
+    - name: Run a simple system uptime command
+      ansible.builtin.command: uptime
+      register: uptime_result
+
+    - name: Print the ENTIRE registered dictionary
+      ansible.builtin.debug:
+        # Notice we are not using .stdout here, just the variable name
+        msg: "{{ uptime_result.stdout }}"

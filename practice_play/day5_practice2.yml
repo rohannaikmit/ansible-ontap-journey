@@ -1,0 +1,25 @@
+---
+- name: This code will test the volume is exist or not if not will create a volume
+  hosts: my_test_environment
+
+  vars_files:
+    - day5_practice2_vars.yml
+
+  tasks:
+    - name: Check if volume is exist Status
+      ansible.builtin.stat:
+        path: "{{ target_volume }}"
+      register: vol_status
+
+    - name: Create volume if dont exist
+      ansible.builtin.file:
+        path: "{{ target_volume }}"
+        state: directory
+      when: vol_status.stat.exists == false
+    
+    - name: Volume is Already exist
+      ansible.builtin.debug:
+        msg: "{{ target_volume }} volume is Already exist"
+      when: vol_status.stat.exists == true
+
+    

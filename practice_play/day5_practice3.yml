@@ -1,0 +1,24 @@
+---
+- name: Simulating Export policy
+  hosts: my_test_environment
+
+  vars_files:
+    - day5_practice3_vars.yml
+
+  tasks:
+    - name: Create folder 
+      ansible.builtin.file:
+        path: "{{ policy_folder }}"
+        state: directory
+    - name: "Audit_logs"
+      ansible.builtin.command: echo "Configuring NFS security..."
+      register: audit_logs
+    - name: Audit Trais
+      ansible.builtin.debug:
+        msg: "{{ audit_logs.stdout }}"
+    - name: create the individual policy files
+      ansible.builtin.file:
+        path: "{{ policy_folder }}/{{ item.ip }}.rule"
+        state: touch
+      loop: "{{ client_ips }}"
+      when: item.status == "approved"

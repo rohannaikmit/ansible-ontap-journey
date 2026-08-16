@@ -1,0 +1,12 @@
+---
+policy_folder: "nfs_rules"
+
+client_ips:
+  - ip: "192.168.1.1"
+    status: "Blocked"
+
+  - ip: "192.168.1.2"
+    status: "approved"
+    
+  - ip: "192.168.1.3"
+    status: "approved"

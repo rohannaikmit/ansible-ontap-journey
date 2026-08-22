@@ -1,0 +1,67 @@
+---
+- name: Create Export policy
+  na_ontap_export_policy:
+    state: present
+    hostname: "{{ na_hostname }}"
+    username: "{{ na_username }}"
+    password: "{{ na_password }}"
+    https: true
+    vserver: "{{ vserver }}"
+    validate_certs: false
+    use_rest: auto
+    name: "{{ policy_name }}_policy"
+  when: protocol.lower() == 'nfs'
+
+
+- name: Creat Export policy rules
+  na_ontap_export_policy_rule:
+    state: present
+    hostname: "{{ na_hostname }}"
+    username: "{{ na_username }}"
+    password: "{{ na_password }}"
+    https: true
+    vserver: "{{ vserver }}"
+    validate_certs: false
+    use_rest: auto
+    name: "{{ policy_name }}_policy"
+    client_match: "{{ clientmatch }}"
+    rule_index: 5 
+    ro_rule: sys
+    rw_rule: sys
+    protocol: nfs
+  when: protocol.lower() == 'nfs'
+
+- name: Create volume
+  na_ontap_volume:
+    name: "{{ item }}"
+    state: present
+    hostname: "{{ na_hostname }}"
+    username: "{{ na_username }}"
+    password: "{{ na_password }}"
+    https: true
+    vserver: "{{ vserver }}"
+    validate_certs: false
+    use_rest: auto
+    size: "{{ size }}"
+    size_unit: gb
+    aggregate_name: "{{ aggregate }}"
+    space_guarantee: none
+    junction_path: "/{{ item }}"
+    volume_security_style: unix
+  loop: "{{ volname }}"
+
+- name: Create Cifs share
+  na_ontap_cifs:
+    name: "{{ item }}"
+    state: present
+    hostname: "{{ na_hostname }}"
+    username: "{{ na_username }}"
+    password: "{{ na_password }}"
+    https: true
+    vserver: "{{ vserver }}"
+    validate_certs: false
+    use_rest: auto
+        
+    path: "/{{ item }}"
+  loop: "{{ volname }}"
+  when: protocol.lower() == 'cifs'

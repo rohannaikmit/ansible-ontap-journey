@@ -1,0 +1,23 @@
+---
+
+- hosts: localhost
+  name: "Provisioning of NAS using roles"
+  gather_facts: false
+
+  vars_prompt:
+    - name: "na_password"
+      prompt: "Enter Cluster password"
+      private: true
+      confirm: false
+   
+  roles:
+    - role: nas_provision
+      volname:
+        - "Dibbu"
+        - "Bibbu"
+      protocol: 'nfs'
+
+    - role: nas_provision
+      volname: 
+        - "Rohu"
+      protocol: 'cifs'

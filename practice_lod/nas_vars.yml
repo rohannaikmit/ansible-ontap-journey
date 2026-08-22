@@ -1,0 +1,12 @@
+na_hostname: cluster1.demo.netapp.com
+na_username: admin
+vserver: svm1_cluster1
+volname:
+  - "findata"
+  - "hrdata" 
+size: 2
+aggregate: cluster1_01_SSD_1
+protocol: 'cifs'
+policy_name: bibbu
+clientmatch: "192.168.1.1"
+

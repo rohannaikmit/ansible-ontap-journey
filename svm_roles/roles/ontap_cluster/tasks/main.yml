@@ -1,0 +1,64 @@
+---
+- name: "{{ name }} - Create Cluster"
+  netapp.ontap.na_ontap_cluster:
+    state: present
+    cluster_name: "{{ name }}"
+    hostname: "{{ nodes[0].ip }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+
+- name: "{{ name }} - Cluster Management LIF"
+  netapp.ontap.na_ontap_interface:
+    state: present
+    interface_name: "cluster_mgmt"
+    address: "{{ cluster_ip }}"
+    netmask: "255.255.255.0"
+    ipspace: "Default"
+    home_node: "{{ nodes[0].name }}"
+    home_port: e0c
+    hostname: "{{ nodes[0].ip }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+
+- name: "{{ name }} - Storage Aggregates"
+  netapp.ontap.na_ontap_aggregate:
+    state: present
+    name: "{{ aggregate.name }}"
+    disk_count: "{{ aggregate.disk_count }}"
+    nodes: "{{ node.name }}"
+    hostname: "{{ hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+  loop: "{{ nodes | subelements('aggregates') }}"
+  loop_control:
+    loop_var: aggregate_item
+    label: "{{ aggregate.name }} on {{ node.name }}"
+  vars:
+    node: "{{ aggregate_item[0] }}"
+    aggregate: "{{ aggregate_item[1] }}"
+
+- name: "{{ name }} - NLF licenses"
+  netapp.ontap.na_ontap_license:
+    state: present
+    license_codes:
+      - "{{ lookup('file', node.license_file) | string }}"
+    hostname: "{{ hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+  loop: "{{ nodes }}"
+  loop_control:
+    loop_var: node
+    label: "Installing license for {{ node.name }}"
+  when: node.license_file is defined 

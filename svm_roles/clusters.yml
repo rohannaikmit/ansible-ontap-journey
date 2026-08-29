@@ -1,0 +1,168 @@
+clusters:
+  - name: cluster1
+    hostname: cluster1.demo.netapp.com
+    cluster_ip: 192.168.0.101
+    nodes:
+      - name: cluster1-01
+        ip: 192.168.0.111
+        license_file: licenses/license_c1n1.txt
+        aggregates:
+          - name: cluster1_01_SSD_1
+            disk_count: 13
+      - name: cluster1-02
+        ip: 192.168.0.112
+        license_file: licenses/license_c1n2.txt
+        aggregates:
+          - name: cluster1_02_SSD_1
+            disk_count: 13
+    svms:
+      - name: svm1_cluster1
+        ipspace: Default
+        domain: demo.netapp.com
+        aggregates: 
+          - cluster1_01_SSD_1
+        dns_servers:
+          - 192.168.0.253
+        services:
+          nas:
+            lif_ip: [192.168.0.131, 192.168.0.132]
+            protocols: [nfs, cifs]
+      - name: svm2_cluster1
+        ipspace: Default
+        domain: demo.netapp.com
+        aggregates: 
+          - cluster1_02_SSD_1
+        dns_servers:
+          - 192.168.0.253
+        services:
+          iscsi:
+            lif_ip: [192.168.0.133, 192.168.0.134]
+    additional_lifs:
+      - name: intercluster_1
+        type: intercluster
+        address: 192.168.0.121
+        netmask: 24
+        home_port: e0e
+        ipspace: Default
+        home_node: cluster1-01
+      - name: intercluster_2
+        type: intercluster
+        address: 192.168.0.122
+        netmask: 24
+        home_port: e0e
+        ipspace: Default
+        home_node: cluster1-02
+  - name: cluster2
+    hostname: cluster2.demo.netapp.com
+    cluster_ip: 192.168.0.102
+    nodes:
+      - name: cluster2-01
+        ip: 192.168.0.113
+        license_file: licenses/license_c2n1.txt
+        aggregates:
+          - name: cluster2_01_SSD_1
+            disk_count: 13
+      - name: cluster2-02
+        ip: 192.168.0.114
+        license_file: licenses/license_c2n2.txt
+        aggregates:
+          - name: cluster2_02_SSD_1
+            disk_count: 13
+    svms:
+      - name: svm1_cluster2
+        ipspace: Default
+        domain: demo.netapp.com
+        aggregates: 
+          - cluster2_01_SSD_1
+        dns_servers:
+          - 192.168.0.253
+        services:
+          iscsi:
+            lif_ip: [192.168.0.151, 192.168.0.152]
+      - name: svm2_cluster2
+        ipspace: Default
+        domain: demo.netapp.com
+        aggregates: 
+          - cluster2_02_SSD_1
+        dns_servers:
+          - 192.168.0.253
+        services:
+          nas:
+            lif_ip: 192.168.0.153
+            protocols: [nfs, cifs]
+            export_policy:
+              name: svm2_cluster2_policy
+              rules:
+                - client_match: 192.168.0.0/24
+                  rule_index: 1
+    additional_lifs:
+      - name: intercluster_1
+        type: intercluster
+        address: 192.168.0.123
+        netmask: 24
+        home_port: e0d
+        ipspace: Default
+        home_node: cluster2-01
+      - name: intercluster_2
+        type: intercluster
+        address: 192.168.0.124
+        netmask: 24
+        home_port: e0d
+        ipspace: Default
+        home_node: cluster2-02
+  - name: cluster3
+    hostname: cluster3.demo.netapp.com
+    cluster_ip: 192.168.0.103
+    nodes:
+      - name: cluster3-01
+        ip: 192.168.0.115
+        license_file: licenses/license_c3n1.txt
+        aggregates:
+          - name: cluster3_01_SSD_1
+            disk_count: 5
+    svms:
+      - name: svm1_cluster3
+        ipspace: Default
+        domain: demo.netapp.com
+        aggregates: 
+          - cluster3_01_SSD_1
+        dns_servers:
+          - 192.168.0.253
+        services:
+          nas:
+            lif_ip: 192.168.0.161
+            protocols: [nfs, cifs]
+            export_policy:
+              name: svm1_cluster3_policy
+              rules:
+                - client_match: 192.168.0.0/24
+                  rule_index: 1
+          s3:
+            lif_ip: 192.168.0.163
+            config:
+              enabled: true
+              bucket_policy: default
+      - name: svm2_cluster3
+        ipspace: Default
+        domain: demo.netapp.com
+        aggregates: 
+          - cluster3_01_SSD_1
+        dns_servers:
+          - 192.168.0.253
+        services:
+          iscsi:
+            lif_ip: 192.168.0.162
+    additional_lifs:
+      - name: intercluster1
+        type: intercluster
+        address: 192.168.0.120
+        netmask: 255.255.255.0
+        home_port: e0e
+        ipspace: Default
+      - name: mgmt_lif_additional
+        type: management
+        address: 192.168.0.121
+        netmask: 255.255.255.0
+        home_port: e0f
+        ipspace: Default
+        vserver: svm1_cluster3

@@ -1,0 +1,46 @@
+---
+- name: Display volume details
+  hosts: localhost
+  gather_facts: false
+
+  collections:
+    - netapp.ontap
+
+  module_defaults:
+    group/netapp.ontap.netapp_ontap:
+      hostname: cluster1.demo.netapp.com
+      username: admin
+      password: Netapp1!
+      validate_certs: false
+      https: true
+
+  tasks:
+
+    - name: Get volume information
+      na_ontap_rest_info:
+        gather_subset:
+          - storage/volumes
+        parameters:
+          svm.name: "svm1_cluster1"
+          fields: "name,state,type,size,svm.name,space.available,space.used,nas.path,nas.security_style"
+      register: vol_info
+
+    - name: Save report to file
+      copy:
+        content: |
+          Vserver              Volume               Aggregate            State     Type   Size       Available    Used%
+          -------------------- -------------------- -------------------- --------- ------ ---------- ------------ ------
+          {% for vol in vol_info.ontap_info['storage/volumes'].records %}
+          {{ '%-20s' | format(vol.svm.name | default('N/A')) }}
+          {{ '%-20s' | format(vol.name | default('N/A')) }}
+          {{ '%-9s'  | format(vol.state | default('N/A')) }}
+          {{ '%-6s'  | format(vol.type | upper | default('N/A')) }}
+          {{ '%-10s' | format(((vol.size | default(0)) / 1073741824) | round(2) ~ 'GB') }}
+          {{ '%-12s' | format(((vol.space.available | default(0)) / 1048576) | round(1) ~ 'MB') }}
+          {{ (((vol.space.used | default(0)) * 100 / (vol.size | default(1))) | round(0)) }}%
+          {% endfor %}
+        dest: /home/ansible/ansible-ontap-journey/practice_play/file.txt
+
+    - name: Display report
+      debug:
+        msg: "{{ lookup('file', '/home/ansible/ansible-ontap-journey/practice_play/file.txt') }}"

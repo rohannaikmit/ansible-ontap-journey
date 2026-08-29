@@ -1,0 +1,207 @@
+---
+- name: "{{ name }} - SVM"
+  netapp.ontap.na_ontap_svm:
+    state: present
+    name: "{{ name }}"
+    aggr_list: "{{ aggregates }}"
+    ipspace: "{{ ipspace }}"
+    services:
+      cifs:
+        allowed: "{{ services.nas is defined and 'cifs' in services.nas.get('protocols', []) }}"
+      iscsi:
+        allowed: "{{ services.iscsi is defined }}"
+        enabled: "{{ services.iscsi is defined }}"
+      nfs:
+        allowed: "{{ services.nas is defined and 'nfs' in services.nas.get('protocols', []) }}"
+        enabled: "{{ services.nas is defined and 'nfs' in services.nas.get('protocols', []) }}"
+      s3:
+        allowed: "{{ services.s3 is defined }}"
+    hostname: "{{ cluster_hostname }}"
+    username: "{{ cluster_username }}"
+    password: "{{ cluster_password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+
+- name: "{{ name }} - SVM DNS configuration"
+  netapp.ontap.na_ontap_dns:
+    state: present
+    vserver: "{{ name }}"
+    domains: "{{ domain }}"
+    nameservers: "{{ dns_servers }}"
+    skip_validation: true
+    hostname: "{{ cluster_hostname }}"
+    username: "{{ cluster_username }}"
+    password: "{{ cluster_password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+  when: domain != "" and dns_servers | length > 0
+
+- name: "{{ name }} -  Export Policy"
+  netapp.ontap.na_ontap_export_policy:
+    state: present
+    name: "{{ services.nas.export_policy.name }}"
+    vserver: "{{ name }}"
+    hostname: "{{ cluster_hostname }}"
+    username: "{{ cluster_username }}"
+    password: "{{ cluster_password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+  when: services.nas is defined and services.nas.export_policy is defined
+
+- name: "{{ name }} - Export Policy Rules"
+  netapp.ontap.na_ontap_export_policy_rule:
+    state: present
+    name: "{{ services.nas.export_policy.name }}"
+    rule_index: "{{ rule.rule_index }}"
+    vserver: "{{ name }}"
+    client_match: "{{ rule.client_match }}"
+    ro_rule: any
+    rw_rule: any
+    super_user_security: any
+    allow_suid: true
+    ntfs_unix_security: ignore
+    hostname: "{{ cluster_hostname }}"
+    username: "{{ cluster_username }}"
+    password: "{{ cluster_password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+  when: services.nas is defined and services.nas.export_policy is defined
+  loop: "{{ services.nas.export_policy.rules }}"
+  loop_control:
+    loop_var: rule
+
+- name: "{{ name }} - NAS data interfaces"
+  netapp.ontap.na_ontap_interface:
+    state: present
+    interface_name: "{{ name }}_nas_data_{{ loop_index + 1 }}"
+    home_port: e0e
+    home_node: "{{ nodes[loop_index % nodes|length].name }}"
+    admin_status: up
+    failover_scope: home_node_only
+    service_policy: default-data-files
+    is_auto_revert: true
+    interface_type: ip
+    address: "{{ nas_ip }}"
+    netmask: 255.255.255.0
+    vserver: "{{ name }}"
+    hostname: "{{ cluster_hostname }}"
+    username: "{{ cluster_username }}"
+    password: "{{ cluster_password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+  when: services.nas is defined
+  loop: "{{ services.nas.lif_ip if services.nas.lif_ip is iterable and services.nas.lif_ip is not string else [services.nas.lif_ip] }}"
+  loop_control:
+    loop_var: nas_ip
+    index_var: loop_index
+
+- name: "{{ name }} - iSCSI data interfaces"
+  netapp.ontap.na_ontap_interface:
+    state: present
+    interface_name: "{{ name }}_iscsi_data_{{ loop_index + 1 }}"
+    home_node: "{{ nodes[loop_index % nodes|length].name }}"
+    admin_status: up
+    service_policy: default-data-blocks
+    interface_type: ip
+    address: "{{ iscsi_ip }}"
+    netmask: 255.255.255.0
+    vserver: "{{ name }}"
+    hostname: "{{ cluster_hostname }}"
+    username: "{{ cluster_username }}"
+    password: "{{ cluster_password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+  when: services.iscsi is defined
+  loop: "{{ services.iscsi.lif_ip if services.iscsi.lif_ip is iterable and services.iscsi.lif_ip is not string else [services.iscsi.lif_ip] }}"
+  loop_control:
+    loop_var: iscsi_ip
+    index_var: loop_index
+
+- name: "S3 service policy"
+  netapp.ontap.na_ontap_service_policy:
+    state: present
+    name: s3_nas_service
+    ipspace: Default
+    services:
+      - data_core
+      - data_nfs
+      - data_cifs
+      - data_s3_server
+      - data_fpolicy_client
+      - management_dns_client
+      - management_ldap_client
+      - management_nis_client
+      - data_dns_server
+    vserver: "{{ name }}"
+    hostname: "{{ cluster_hostname }}"
+    username: "{{ cluster_username }}"
+    password: "{{ cluster_password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+  when: services.s3 is defined
+
+- name: "{{ name }} - S3 data interfaces"
+  netapp.ontap.na_ontap_interface:
+    state: present
+    interface_name: "{{ name }}_s3_data_{{ loop_index + 1 }}"
+    home_port: e0d
+    home_node: "{{ nodes[loop_index % nodes|length].name }}"
+    admin_status: up
+    failover_scope: home_node_only
+    service_policy: s3_nas_service
+    is_auto_revert: true
+    interface_type: ip
+    address: "{{ s3_ip }}"
+    netmask: 255.255.255.0
+    vserver: "{{ name }}"
+    hostname: "{{ cluster_hostname }}"
+    username: "{{ cluster_username }}"
+    password: "{{ cluster_password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+  when: services.s3 is defined
+  loop: "{{ services.s3.lif_ip if services.s3.lif_ip is iterable and services.s3.lif_ip is not string else [services.s3.lif_ip] }}"
+  loop_control:
+    loop_var: s3_ip
+    index_var: loop_index
+
+- name: "{{ name }} - CIFS server"
+  netapp.ontap.na_ontap_cifs_server:
+    state: present
+    name: "{{ name }}"
+    ou: "CN=Computers"
+    vserver: "{{ name }}"
+    service_state: started
+    domain: "{{ domain }}"
+    admin_user_name: "{{ cifs_username }}"
+    admin_password: "{{ cifs_password }}"
+    hostname: "{{ cluster_hostname }}"
+    username: "{{ cluster_username }}"
+    password: "{{ cluster_password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+  when: services.nas is defined and 'cifs' in services.nas.get('protocols', []) and cifs_username != '' and cifs_password != ''
+
+- name: "{{ name }} - S3 service"
+  netapp.ontap.na_ontap_s3_services:
+    state: present
+    name: "{{ name }}"
+    enabled: true
+    vserver: "{{ name }}"
+    hostname: "{{ cluster_hostname }}"
+    username: "{{ cluster_username }}"
+    password: "{{ cluster_password }}"
+    is_https_enabled: false
+    https: true
+    validate_certs: false
+    use_rest: auto
+  when: services.s3 is defined and services.s3.config.enabled | default(false)

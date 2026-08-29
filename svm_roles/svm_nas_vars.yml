@@ -1,0 +1,17 @@
+netapp_hostname: cluster2.demo.netapp.com
+netapp_username: admin
+
+domain: demo.netapp.com
+nameserver: 192.168.0.253
+svm_ipspace: Default
+aggr_name: cluster2_01_SSD_1
+
+svm_name: svm2_cluster2
+svm_nas_ip: 192.168.0.153
+svm_nas_lif: svm2_cluster2_nas_data_1
+netmask: 255.255.255.0
+svm_nas_node: cluster2-01
+svm_nas_home: e0e
+
+cifs_username: Administrator
+cifs_password: Netapp1!

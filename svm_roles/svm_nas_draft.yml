@@ -1,0 +1,28 @@
+---
+- hosts: localhost
+  gather_facts: false
+  collections:
+    - netapp.ontap
+
+  module_defaults:
+    group/netapp.ontap.netapp_ontap:
+      hostname: "{{ netapp_hostname }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      use_rest: auto
+  vars_files:
+    - ./svm_nas_vars_draft.yml
+  vars_prompt:
+    - name: "netapp_password"
+      prompt: "Enter the NetApp Admin Password"
+      private: true
+      confirm: true
+
+  name: "Build SVM: {{ svm_name }}"
+
+  tasks:
+
+  - name: Create SVM with NFS and CIFS protocols
+    na_ontap_svm:

@@ -1,0 +1,12 @@
+---
+# Default variables for ontap_cluster role
+cluster_name: ""
+cluster_hostname: ""
+cluster_ip: ""
+cluster_username: "admin"
+cluster_password: ""
+node_name: ""
+node_ip: ""
+aggr_name: "aggr1"
+disk_count: 5
+license_file: "license.txt" 

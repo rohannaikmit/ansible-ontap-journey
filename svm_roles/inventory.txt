@@ -1,0 +1,8 @@
+
+[all:vars]
+ansible_user=ansible
+ansible_ssh_pass=Netapp1!
+ansible_port=22
+
+[control]
+ansible ansible_host=192.168.0.188

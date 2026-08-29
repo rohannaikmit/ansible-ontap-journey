@@ -1,0 +1,72 @@
+---
+- hosts: localhost
+  gather_facts: false
+  collections:
+    - netapp.ontap
+
+  module_defaults:
+    group/netapp.ontap.netapp_ontap:
+      hostname: "{{ netapp_hostname }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      use_rest: auto
+  vars_files:
+    - ./svm_nas_vars.yml
+  vars_prompt:
+    - name: "netapp_password"
+      prompt: "Enter the NetApp Admin Password"
+      private: true
+      confirm: true
+
+  name: "Build SVM: {{ svm_name }}"
+
+  tasks:
+
+  - name: Create SVM with NFS and CIFS protocols
+    na_ontap_svm:
+      state: present
+      name: "{{ svm_name }}"
+      aggr_list: "{{ aggr_name }}"
+      ipspace: "{{ svm_ipspace }}"
+      services:
+        cifs:
+          allowed: true
+        nfs:
+          allowed: true
+          enabled: true
+
+  - name: Add DNS
+    netapp.ontap.na_ontap_dns:
+      state: present
+      vserver: "{{ svm_name }}"
+      domains: "{{ domain }}"
+      nameservers: "{{ nameserver }}"
+      skip_validation: true
+
+  - name: Create NAS interface
+    netapp.ontap.na_ontap_interface:
+      state: present
+      interface_name: "{{ svm_nas_lif }}"
+      home_port: "{{ svm_nas_home }}"
+      home_node: "{{ svm_nas_node }}"
+      admin_status: up
+      failover_scope: home_node_only
+      service_policy: default-data-files
+      is_auto_revert: true
+      interface_type: ip
+      address: "{{ svm_nas_ip }}"
+      netmask: "{{ netmask }}"
+      vserver: "{{ svm_name }}"
+
+  - name: Create cifs_server
+    netapp.ontap.na_ontap_cifs_server:
+      state: present
+      name: "{{ svm_name }}"
+      ou: "CN=Computers"
+      vserver: "{{ svm_name }}"
+      service_state: started
+      domain: "{{ domain }}"
+      admin_user_name: "{{ cifs_username }}"
+      admin_password: "{{ cifs_password }}"

@@ -1,0 +1,16 @@
+---
+# Default variables for ontap_lif role
+cluster_name: ""
+cluster_hostname: ""
+cluster_username: "admin"
+cluster_password: ""
+node_name: ""
+lif_config:
+  name: ""
+  type: "data"  # data, management, intercluster
+  address: ""
+  netmask: "255.255.255.0"
+  home_port: "e0d"
+  ipspace: "Default"
+  service_policy: "default-data-files"
+  vserver: "" 

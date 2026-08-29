@@ -1,0 +1,47 @@
+---
+- name: Display volume list
+  hosts: localhost
+  gather_facts: false
+
+  collections:
+    - netapp.ontap
+  module_defaults:
+    group/netapp.ontap.netapp_ontap:
+      hostname: cluster1.demo.netapp.com
+      username: admin
+      password: Netapp1!
+      https: true
+      validate_certs: false
+      use_rest: auto
+     
+
+  vars_files:
+    - ./info_volume_vars.yml
+
+  tasks:
+    - name: Module will collect volumes in cluster
+      na_ontap_rest_info:
+        gather_subset:
+          - "storage/volumes"
+        parameters:
+          svm.name: "{{ svm }}"
+      register: vol_info
+
+    - name: Show returned data
+      debug:
+        var: vol_info | to_nice_yaml 
+
+    - name: Display vol list
+      ansible.builtin.debug:
+        #msg: "volume = {{ item.name }}"
+      #loop: "{{ vol_info.ontap_info['storage/volumes'].records }}"
+        msg: "Volume={{ item.name }}, SVM={{ item.svm.name }}"
+      loop: "{{ vol_info.ontap_info['storage/volumes'].records }}"
+      loop_control:
+        label: "{{ item.name | to_nice_yaml }}"
+    
+    - name: Copy data to file
+      copy:
+        content: "{{ vol_info | to_nice_yaml }}"
+        dest: /home/ansible/ansible-ontap-journey/practice_play/test/file.txt
+

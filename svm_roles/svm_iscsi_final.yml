@@ -1,0 +1,60 @@
+---
+- hosts: localhost
+  gather_facts: false
+  collections:
+    - netapp.ontap
+
+  name: "Build SVM: {{ svm_name }}"
+
+  module_defaults:
+    group/netapp.ontap.netapp_ontap:
+      hostname: "{{ netapp_hostname }}"
+      username: "{{ netapp_username }}"
+      password: "{{ netapp_password }}"
+      https: true
+      validate_certs: false
+      use_rest: auto
+  vars_files:
+    - ./svm_iscsi_vars.yml
+  vars_prompt:
+    - name: "netapp_password"
+      prompt: "Enter the NetApp Admin Password"
+      private: true
+      confirm: true
+
+  tasks:
+
+  - name: Create SVM with iSCSI protocol
+    na_ontap_svm:
+      state: present
+      name: "{{ svm_name }}"
+      aggr_list: "{{ aggr_name }}"
+      ipspace: "{{ svm_ipspace }}"
+      services:
+        iscsi:
+          allowed: true
+          enabled: true
+
+  - name: Create iSCSI data interface 1
+    netapp.ontap.na_ontap_interface:
+      state: present
+      interface_name: "{{ svm_iscsi_lif_1 }}"
+      home_node: "{{ svm_iscsi_node_1 }}"
+      admin_status: up
+      service_policy: default-data-blocks
+      interface_type: ip
+      address: "{{ svm_iscsi_ip_1 }}"
+      netmask: "{{ netmask }}"
+      vserver: "{{ svm_name }}"
+
+  - name: Create iSCSI data interface 2
+    netapp.ontap.na_ontap_interface:
+      state: present
+      interface_name: "{{ svm_iscsi_lif_2 }}"
+      home_node: "{{ svm_iscsi_node_2 }}"
+      admin_status: up
+      service_policy: default-data-blocks
+      interface_type: ip
+      address: "{{ svm_iscsi_ip_2 }}"
+      netmask: "{{ netmask }}"
+      vserver: "{{ svm_name }}"

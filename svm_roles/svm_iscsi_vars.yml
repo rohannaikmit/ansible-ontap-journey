@@ -1,0 +1,14 @@
+netapp_hostname: cluster2.demo.netapp.com
+netapp_username: admin
+
+svm_name: svm1_cluster2
+aggr_name: cluster2_01_SSD_1
+svm_ipspace: Default
+
+svm_iscsi_ip_1: 192.168.0.151
+svm_iscsi_lif_1: svm1_cluster2_iscsi_data_1
+svm_iscsi_node_1: cluster2-01
+svm_iscsi_ip_2: 192.168.0.152
+svm_iscsi_lif_2: svm1_cluster2_iscsi_data_2
+svm_iscsi_node_2: cluster2-02
+netmask: 255.255.255.0

@@ -1,0 +1,46 @@
+---
+- name: Display volume details
+  hosts: localhost
+  gather_facts: false
+
+  collections:
+    - netapp.ontap
+
+  module_defaults:
+    group/netapp.ontap.netapp_ontap:
+      hostname: cluster1.demo.netapp.com
+      username: admin
+      password: Netapp1!
+      validate_certs: false
+      https: true
+
+  tasks:
+
+    - name: Get volume information
+      na_ontap_rest_info:
+        gather_subset:
+          - storage/volumes
+        parameters:
+          fields: "name,state,type,size,nas.path,nas.security_style,snapshot_policy"
+          svm.name: "svm1_cluster1"
+      register: vol_info
+
+    - name: Show volume structure
+      debug:
+
+        var: "{{ vol_info.ontap_info['storage/volumes'].records }}"
+
+    - name: Copy data to file
+      copy:
+        content: |
+          {% for vol in vol_info.ontap_info['storage/volumes'].records %}
+          Volume: {{ vol.name }}
+          Security Style: {{ vol.nas.security_style | default('N/A') }}
+          Junction Path: {{ vol.nas.path | default('N/A') }}
+          Type: {{ vol.type | default('N/A') }}
+          State: {{ vol.state | default('N/A') }}
+          Policy: {{ vol.snapshot_policy.name | default('N/A') }}
+          Size: {{ (vol.size / 1073741824) | round(2) }} GB
+          ----------------------------------------
+          {% endfor %}
+        dest: /home/ansible/ansible-ontap-journey/practice_play/file.txt  

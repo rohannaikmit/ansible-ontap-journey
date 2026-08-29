@@ -1,0 +1,21 @@
+---
+# Default variables for ontap_svm role
+cluster_name: ""
+cluster_hostname: ""
+cluster_username: "admin"
+cluster_password: ""
+svm_name: ""
+svm_ip: ""
+svm_ipspace: "Default"
+svm_protocols:
+  - nfs
+  - cifs
+svm_domain: ""
+svm_dns_servers: []
+cifs_username: ""
+cifs_password: ""
+aggr_name: "aggr1"
+node_name: ""
+s3_config:
+  enabled: false
+  bucket_policy: "default" 

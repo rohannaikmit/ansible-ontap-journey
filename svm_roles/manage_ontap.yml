@@ -1,0 +1,81 @@
+---
+- name: Manage ONTAP clusters and SVMs
+  hosts: localhost
+  gather_facts: false
+  collections:
+    - netapp.ontap
+
+  vars_files:
+    - clusters.yml
+    - passwords.yml
+
+  tasks:
+    - name: Create or modify clusters
+      include_role:
+        name: ontap_cluster
+      vars:
+        name: "{{ cluster.name }}"
+        hostname: "{{ cluster.hostname }}"
+        cluster_ip: "{{ cluster.cluster_ip }}"
+        nodes: "{{ cluster.nodes }}"
+        username: "{{ creds[cluster.name].username }}"
+        password: "{{ creds[cluster.name].password }}"
+      loop: "{{ clusters }}"
+      loop_control:
+        loop_var: cluster
+      when: clusters is defined
+      tags:
+        - cluster
+
+    - name: Create or configure SVMs
+      include_role:
+        name: ontap_svm
+      vars:
+        cluster: "{{ item[0] }}"
+        svm: "{{ item[1] }}"
+        cluster_name: "{{ cluster.name }}"
+        cluster_hostname: "{{ cluster.hostname }}"
+        cluster_username: "{{ creds[cluster.name].username }}"
+        cluster_password: "{{ creds[cluster.name].password }}"
+        name: "{{ svm.name }}"
+        ipspace: "{{ svm.ipspace }}"
+        domain: "{{ svm.domain }}"
+        aggregates: "{{ svm.aggregates }}"
+        dns_servers: "{{ svm.dns_servers }}"
+        cifs_username: "{{ creds[cluster.name].cifs_username }}"
+        cifs_password: "{{ creds[cluster.name].cifs_password }}"
+        nodes: "{{ cluster.nodes }}"
+        services: "{{ svm.services }}"
+      with_subelements:
+        - "{{ clusters | default([]) }}"
+        - svms
+        - skip_missing: true
+      loop_control:
+        label: "{{ cluster.name }} - {{ svm.name }}"
+        extended: true
+      when: clusters is defined
+      tags:
+        - svm
+
+    - name: Configure additional LIFs
+      include_role:
+        name: ontap_lif
+      vars:
+        cluster: "{{ item[0] }}"
+        lif: "{{ item[1] }}"
+        cluster_name: "{{ cluster.name }}"
+        cluster_hostname: "{{ cluster.hostname }}"
+        cluster_username: "{{ creds[cluster.name].username }}"
+        cluster_password: "{{ creds[cluster.name].password }}"
+        lif_config: "{{ lif }}"
+        nodes: "{{ cluster.nodes }}"
+      with_subelements:
+        - "{{ clusters | default([]) }}"
+        - additional_lifs
+        - skip_missing: true
+      loop_control:
+        label: "{{ cluster.name }} - {{ lif.name }}"
+        extended: true
+      when: clusters is defined
+      tags:
+        - lif

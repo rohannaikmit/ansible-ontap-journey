@@ -1,0 +1,66 @@
+---
+- name: "{{ cluster_name }} - Intercluster LIF(s)"
+  netapp.ontap.na_ontap_interface:
+    state: present
+    interface_name: "{{ lif_config.name }}"
+    address: "{{ lif_config.address }}"
+    netmask: "{{ lif_config.netmask }}"
+    home_port: "{{ lif_config.home_port }}"
+    home_node: "{{ lif_config.home_node | default(nodes[0].name) }}"
+    ipspace: "{{ lif_config.ipspace | default('Default') }}"
+    service_policy: default-intercluster
+    is_auto_revert: true
+    interface_type: ip
+    admin_status: up
+    hostname: "{{ cluster_hostname }}"
+    username: "{{ cluster_username }}"
+    password: "{{ cluster_password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+  when: lif_config.type == "intercluster"
+
+- name: "{{ cluster_name }} - Additional management LIF(s)"
+  netapp.ontap.na_ontap_interface:
+    state: present
+    interface_name: "{{ lif_config.name }}"
+    address: "{{ lif_config.address }}"
+    netmask: "{{ lif_config.netmask }}"
+    home_port: "{{ lif_config.home_port }}"
+    home_node: "{{ lif_config.home_node | default(nodes[0].name) }}"
+    ipspace: "{{ lif_config.ipspace | default('Default') }}"
+    service_policy: default-management
+    is_auto_revert: true
+    interface_type: ip
+    admin_status: up
+    vserver: "{{ lif_config.vserver | default('') }}"
+    hostname: "{{ cluster_hostname }}"
+    username: "{{ cluster_username }}"
+    password: "{{ cluster_password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+  when: lif_config.type == "management"
+
+- name: "{{ cluster_name }} - Additional data LIF(s)"
+  netapp.ontap.na_ontap_interface:
+    state: present
+    interface_name: "{{ lif_config.name }}"
+    address: "{{ lif_config.address }}"
+    netmask: "{{ lif_config.netmask }}"
+    home_port: "{{ lif_config.home_port }}"
+    home_node: "{{ lif_config.home_node | default(nodes[0].name) }}"
+    ipspace: "{{ lif_config.ipspace | default('Default') }}"
+    service_policy: "{{ lif_config.service_policy | default('default-data-files') }}"
+    is_auto_revert: "{{ lif_config.is_auto_revert | default(true) }}"
+    interface_type: ip
+    admin_status: up
+    failover_scope: "{{ lif_config.failover_scope | default('home_node_only') }}"
+    vserver: "{{ lif_config.vserver }}"
+    hostname: "{{ cluster_hostname }}"
+    username: "{{ cluster_username }}"
+    password: "{{ cluster_password }}"
+    https: true
+    validate_certs: false
+    use_rest: auto
+  when: lif_config.type == "data" 

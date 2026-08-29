@@ -1,0 +1,5 @@
+"Vserver","Volume","Aggregate","Size_GB","Security_Style","Policy_Name","Junction_Path"
+"svm1_cluster1","bibbu","cluster1_01_SSD_1","1.0","unix","default","/bibbu"
+"svm1_cluster1","dibbu","cluster1_01_SSD_1","1.0","ntfs","default","/dibbu"
+"svm2_cluster1","svm2_cluster1_root","cluster1_02_SSD_1","0.02","unix","default","/"
+"svm1_cluster1","svm1_cluster1_root","cluster1_01_SSD_1","0.02","unix","default","/"

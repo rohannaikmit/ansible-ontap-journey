@@ -1,0 +1,32 @@
+- name: Export cluster volume details to CSV
+  hosts: localhost
+  gather_facts: false
+
+  collections:
+    - netapp.ontap
+
+  module_defaults:
+    group/netapp.ontap.netapp_ontap:
+      hostname: cluster1.demo.netapp.com
+      username: admin
+      password: Netapp1!
+      validate_certs: false
+      https: true
+
+  tasks:
+    - name: Get volume information across cluster
+      na_ontap_rest_info:
+        gather_subset:
+          - storage/volumes
+        parameters:
+          fields: "name,size,aggregates.name,nas.security_style,snapshot_policy.name,nas.path,svm.name"
+      register: vol_info
+
+    - name: Write volume details to CSV file
+      copy:
+        dest: /home/ansible/ansible-ontap-journey/practice_play/volumes.csv
+        content: |
+          "Vserver","Volume","Aggregate","Size_GB","Security_Style","Policy_Name","Junction_Path"
+          {% for vol in vol_info.ontap_info['storage/volumes'].records %}
+          "{{ vol.svm.name | default('N/A') }}","{{ vol.name }}","{{ (vol.aggregates | map(attribute='name') | list | join('; ')) if vol.aggregates is defined else 'N/A' }}","{{ (vol.size / 1073741824) | round(2) if vol.size is defined else 'N/A' }}","{{ vol.nas.security_style | default('N/A') }}","{{ vol.snapshot_policy.name | default('N/A') }}","{{ vol.nas.path | default('N/A') }}"
+          {% endfor %}

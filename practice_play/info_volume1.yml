@@ -1,38 +1,43 @@
----
-- name: Display volume list
+- name: Display volume details across entire cluster
   hosts: localhost
   gather_facts: false
 
   collections:
     - netapp.ontap
+
   module_defaults:
     group/netapp.ontap.netapp_ontap:
       hostname: cluster1.demo.netapp.com
       username: admin
       password: Netapp1!
-      https: true
       validate_certs: false
-      use_rest: auto
-     
-
-  vars_files:
-    - ./info_volume_vars.yml
+      https: true
 
   tasks:
-    - name: Module will collect volumes in cluster
+    - name: Get volume information
       na_ontap_rest_info:
         gather_subset:
-          - "storage/volumes"
+          - storage/volumes
         parameters:
-          svm.name: "{{ svm }}"
+          # Requesting specific fields prevents high REST payload overhead on large clusters
+          fields: "name,size,aggregates.name,nas.security_style,snapshot_policy.name,nas.path,svm.name"
       register: vol_info
 
-    - name: Show returned data
+    - name: Show volume structure
       debug:
-        var: vol_info | to_nice_yaml
+        var: vol_info.ontap_info['storage/volumes'].records
 
     - name: Copy data to file
       copy:
-        content: "{{ vol_info | to_nice_yaml }}"
-        dest: /home/ansible/ansible-ontap-journey/practice_play/test/file.txt
-     
+        content: |
+          {% for vol in vol_info.ontap_info['storage/volumes'].records %}
+          Vserver: {{ vol.svm.name | default('N/A') }}
+          Volume: {{ vol.name }}
+          Aggregate: {{ (vol.aggregates | map(attribute='name') | list | join(', ')) if vol.aggregates is defined else 'N/A' }}
+          Size: {{ (vol.size / 1073741824) | round(2) if vol.size is defined else 'N/A' }} GB
+          Security Style: {{ vol.nas.security_style | default('N/A') }}
+          Policy: {{ vol.snapshot_policy.name | default('N/A') }}
+          Junction Path: {{ vol.nas.path | default('N/A') }}
+          ----------------------------------------
+          {% endfor %}
+        dest: /home/ansible/ansible-ontap-journey/practice_play/file.txt

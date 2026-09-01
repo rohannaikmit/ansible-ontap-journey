@@ -1,0 +1,28 @@
+---
+- name: This Playbook is for Practice
+  hosts: localhost
+
+
+
+  vars_files:
+    - credential.yml
+
+  tasks:
+    - name: Display ONTAP Version
+      netapp.ontap.na_ontap_rest_info:
+        
+        hostname: cluster2.demo.netapp.com
+        username: "{{ u_username }}"
+        password: "{{ p_password }}"
+        validate_certs: false
+        https: true
+        gather_subset:
+          - "cluster_identity_info"
+        parameters:
+          fields: "*"
+      register: cluster_info
+
+    - name: Print_msg
+      debug:
+        msg: "Connected to Ontap and Ontap version is : {{ cluster_info.ontap_info.cluster.version.full }}"
+      #"Connected to Ontap and Ontap version is : {{ cluster_info.ontap_info.cluster_identity_info.cluster_operating_system_version }}"

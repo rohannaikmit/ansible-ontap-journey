@@ -22,11 +22,6 @@
       netapp.ontap.na_ontap_svm:
         state: present
         name: "{{ svm }}"
-        hostname: cluster2.demo.netapp.com
-        username: admin
-        password: Netapp1!
-        validate_certs: false
-        https: true
         services:
           nfs:
             allowed: true
@@ -35,6 +30,7 @@
           iscsi:
             allowed: true
             enabled: true
+
     - name: Create a FlexVol
       netapp.ontap.na_ontap_volume:
         state: present
@@ -69,6 +65,31 @@
         protocol: "nfs"
         vserver: "{{ svm }}"
         rule_index: 2
+
+    - name: Auto resize of nearlyfull volume
+      netapp.ontap.na_ontap_volume_autosize:
+        volume: "{{ volname }}"
+        vserver: "{{ svm }}"
+        mode: "grow"
+        grow_threshold_percent: 95
+        maximum_size: 10g
+        minimum_size: 21m
+        shrink_threshold_percent: 50 
+
+    - name: Cluster peering
+      netapp.ontap.na_ontap_cluster_peer:
+        state: present
+        source_intercluster_lifs: "192.168.0.123"
+        dest_intercluster_lifs: "192.168.0.121"
+        passphrase: "Netapp1!"
+        source_cluster_name: 'cluster2'
+        dest_cluster_name: 'cluster1'
+        
+        peer_options:
+          hostname: "cluster1.demo.netapp.com"
+          username: "admin"
+          password: "Netapp1!"
+
 
 
 
